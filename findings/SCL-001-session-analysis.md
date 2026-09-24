@@ -1,58 +1,58 @@
-Full CSRF token validation to be tested in SCL-006.
+# SCL-001 — Session Management Analysis
+
+**Target:** Moodle 5.1.6+ (Build: 20260818)
+**Date:** September 2026
+**Tester:** Yubin — SecChkLab Research
+**Status:** ✅ Complete
+**Overall Verdict:** Not Vulnerable
 
 ---
 
 ## Summary
 
 | Test | Verdict |
-|---|---|
+|------|---------|
 | Session token manipulation | ✅ Not Vulnerable |
-| Session replay after logout | ✅ Not Vulnerable |
+| Post-logout session replay | ✅ Not Vulnerable |
 | MOODLEID1_ persistence | ℹ️ Informational |
+| Cookie security flags | ✅ Secure |
+| Session timeout | ✅ Secure |
 
-Moodle 5.1.6+ implements robust server-side session management. 
-Session tokens are validated against the server session store, 
-properly destroyed on logout, and cannot be replayed or manipulated 
-to gain unauthorized access.
-
----
-
-## References
-
-- OWASP Session Management Cheat Sheet
-- CWE-384: Session Fixation  
-- CWE-613: Insufficient Session Expiration
-- OWASP Top 10: A07:2021 — Identification and Authentication Failures
+Moodle 5.1.6+ session management is robustly implemented.
+Server-side validation, proper session destruction on logout,
+HttpOnly cookie flags, and session timeout work together as
+a layered defense against session-based attacks.
 
 ---
 
-## Next Steps
+## Cookie Inventory
 
-Findings from this test feed directly into:
-- SCL-004 (XSS) — if XSS is found, revisit HttpOnly flag status 
-  on MOODLEID1_ as combined attack vector
-- SCL-006 (CSRF) — logintoken observed, full validation pending
+| Cookie | Purpose | HttpOnly | Secure | SameSite |
+|--------|---------|----------|--------|---------|
+| MoodleSession | Primary session token | ✅ | ✅ | Lax |
+| MOODLEID1_ | Persistent browser identifier | ✅ | ✅ | — |
+| _xsrf | CSRF protection token | — | — | — |
 
+---
 
-## Test 3 — MOODLEID1_ Persistence Analysis
+## Test Results
 
-Observation: MOODLEID1_ cookie persists through logout unchanged
-             Value only regenerates on fresh authentication
-             Persistent value does not grant access alone
-             
-Timeline:
-- Pre-login:  sodium:ZpmNwb... [value A]
-- Logged in:  sodium:ZpmNwb... [value A — unchanged]  
-- Logged out: sodium:ZpmNwb... [value A — unchanged]
-- Re-login:   sodium:jlznXy... [value B — NEW]
+### Test 1 — Session Token Manipulation
+**Result:** Server rejected modified token, issued new anonymous
+session, redirected to login page with "Session expired" message.
+**Verdict:** ✅ Not Vulnerable
 
-Finding: MOODLEID1_ is a persistent browser identifier that 
-         survives logout. It changes only on fresh authentication.
-         Possession alone does not grant session access.
-         
-Potential Risk: Persistent identifier could be used to track 
-                users across sessions or correlate browsing 
-                patterns even after logout.
-                
-Verdict: INFORMATIONAL — Not directly exploitable but 
-         worth noting for privacy implications.
+### Test 2 — Post-Logout Session Replay
+**Captured pre-logout token:** `b3b53lfo8h7cp2p1linphacjns`
+
+**Logout request observed:**
+GET /moodle/login/logout.php?sesskey=rePl5hp5nd
+Cookie: MoodleSession=b3b53lfo8h7cp2p1linphacjns
+
+**Result:** Pre-logout token rejected after logout.
+Server destroyed session record server-side.
+No access granted on replay attempt.
+**Verdict:** ✅ Not Vulnerable
+
+### Test 3 — MOODLEID1_ Persistence
+| State |
