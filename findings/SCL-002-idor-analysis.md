@@ -54,3 +54,67 @@ Three quiz attempts were generated across three accounts:
 
 **Test:** Logged in as teststudent. Attempted to access
 admin's quiz attempt directly via URL manipulation:
+/mod/quiz/review.php?attempt=1&cmid=3
+/mod/quiz/attempt.php?attempt=1&cmid=3
+
+
+**Response:** "This is not your attempt!"
+
+Admin's quiz answers, score, and submission were not served.
+Moodle validated attempt ownership before serving any content.
+
+**Verdict:** ✅ Not Vulnerable — ownership validation
+prevents unauthorized content access via attempt ID manipulation.
+
+---
+
+## Test 3 — Attempt Enumeration via Error Message Differentiation
+
+**This is the confirmed finding.**
+
+By observing error message differences across attempt IDs,
+an attacker can map the entire quiz attempt space without
+ever accessing protected content:
+
+| Scenario | Response | Information Leaked |
+|---|---|---|
+| Valid attempt, wrong owner | "This is not your attempt!" | Attempt exists, owned by another user |
+| Valid attempt, correct owner | Quiz content served | Attempt exists, you own it |
+| Invalid attempt ID | "This quiz attempt no longer exists" | No attempt at this ID |
+| Not authenticated | Redirect to login | System requires authentication |
+
+**Impact:** An attacker can cycle through attempt IDs
+and use error message differences to:
+- Determine exactly how many quiz attempts exist system-wide
+- Identify which attempt IDs are active and owned by other users
+- Infer system usage patterns and user activity volume
+- Build a complete map of attempt ownership without viewing content
+
+**Severity:** LOW
+No quiz content, answers, or grades are exposed.
+Only metadata about attempt existence is leaked.
+
+**Verdict:** ⚠️ Finding Confirmed — Information disclosure
+through inconsistent error message responses.
+
+---
+
+## Remediation Recommendation
+
+Moodle should return a single unified error response
+regardless of whether an attempt exists or belongs
+to another user. Recommended response:
+
+> "You do not have permission to view this attempt."
+
+This makes valid and invalid attempt IDs indistinguishable
+to unauthorized requesters and eliminates the enumeration surface.
+
+---
+
+## References
+
+- OWASP Top 10: A01:2021 — Broken Access Control
+- OWASP Top 10: A05:2021 — Security Misconfiguration
+- CWE-200: Exposure of Sensitive Information to Unauthorized Actor
+- CWE-284: Improper Access Control
