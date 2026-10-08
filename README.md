@@ -47,8 +47,8 @@ building things and understanding how they break.
 
 | ID | Attack Vector | Status | Severity |
 |---|---|---|---|
-| SCL-001 | Session Analysis | 🔄 In Progress | TBD |
-| SCL-002 | IDOR | ⏳ Planned | TBD |
+| SCL-001 | Session Analysis | 🔄 In Progress | 👌🏿 |
+| SCL-002 | IDOR | ⏳ Planned | 👌🏿|
 | SCL-003 | SQL Injection | ⏳ Planned | TBD |
 | SCL-004 | XSS | ⏳ Planned | TBD |
 | SCL-005 | File Upload Exploitation | ⏳ Planned | TBD |
